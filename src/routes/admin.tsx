@@ -28,21 +28,27 @@ type Row = {
 const ORDER_STATUSES = ["pending", "paid", "processing", "completed", "cancelled"] as const;
 
 function AdminPage() {
-  const [tab, setTab] = useState<"orders" | "visas" | "umrah">("orders");
+  const [tab, setTab] = useState<"orders" | "visas" | "umrah" | "inquiries" | "payments">("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [visas, setVisas] = useState<Row[]>([]);
   const [umrah, setUmrah] = useState<Row[]>([]);
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [authed, setAuthed] = useState<boolean | null>(null);
 
   const refresh = async () => {
-    const [o, v, u] = await Promise.all([
+    const [o, v, u, iq, pc] = await Promise.all([
       supabase.from("orders").select("*, order_items(*)").order("created_at", { ascending: false }).limit(100),
       supabase.from("visa_services").select("*").order("country"),
       supabase.from("umrah_packages").select("*").order("price_pkr"),
+      supabase.from("inquiries").select("*").order("created_at", { ascending: false }).limit(100),
+      supabase.from("payment_configs").select("*").order("provider"),
     ]);
     setOrders(o.data ?? []);
     setVisas((v.data ?? []) as any);
     setUmrah((u.data ?? []) as any);
+    setInquiries(iq.data ?? []);
+    setPayments(pc.data ?? []);
   };
 
   useEffect(() => {
@@ -65,15 +71,19 @@ function AdminPage() {
     </AppShell>
   );
 
+  const counts: Record<typeof tab, number> = {
+    orders: orders.length, visas: visas.length, umrah: umrah.length, inquiries: inquiries.length, payments: payments.length,
+  };
+
   return (
     <AppShell>
-      <PageHeader title="Admin Dashboard" subtitle="Full control over orders, services, and content" />
+      <PageHeader title="Admin Dashboard" subtitle="Full control over orders, services, inquiries and payments" />
       <section className="py-6">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="inline-flex gap-1 bg-muted rounded-full p-1 mb-6">
-            {(["orders","visas","umrah"] as const).map((t) => (
+          <div className="inline-flex flex-wrap gap-1 bg-muted rounded-full p-1 mb-6">
+            {(["orders","visas","umrah","inquiries","payments"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)} className={`px-5 py-2 rounded-full text-sm font-semibold capitalize transition ${tab===t?"bg-card shadow":"text-muted-foreground"}`}>
-                {t} ({t==="orders"?orders.length:t==="visas"?visas.length:umrah.length})
+                {t} ({counts[t]})
               </button>
             ))}
           </div>
@@ -81,11 +91,91 @@ function AdminPage() {
           {tab === "orders" && <OrdersTable orders={orders} onChange={refresh} />}
           {tab === "visas" && <ServicesTable rows={visas} table="visa_services" onChange={refresh} />}
           {tab === "umrah" && <ServicesTable rows={umrah} table="umrah_packages" onChange={refresh} />}
+          {tab === "inquiries" && <InquiriesTable rows={inquiries} />}
+          {tab === "payments" && <PaymentsTable rows={payments} onChange={refresh} />}
         </div>
       </section>
     </AppShell>
   );
 }
+
+function InquiriesTable({ rows }: { rows: any[] }) {
+  if (rows.length === 0) return <p className="text-center text-muted-foreground py-12">No inquiries yet.</p>;
+  return (
+    <div className="grid gap-3">
+      {rows.map((r) => (
+        <div key={r.id} className="bg-card rounded-xl ring-1 ring-border p-4">
+          <div className="flex justify-between gap-4 mb-2">
+            <div>
+              <div className="font-semibold">{r.name} <span className="text-xs text-muted-foreground font-normal">· {r.email}{r.phone ? ` · ${r.phone}` : ""}</span></div>
+              {r.subject && <div className="text-sm text-muted-foreground">{r.subject}{r.service_interest ? ` — ${r.service_interest}` : ""}</div>}
+            </div>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</span>
+          </div>
+          <p className="text-sm whitespace-pre-wrap">{r.message}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PaymentsTable({ rows, onChange }: { rows: any[]; onChange: () => void }) {
+  return (
+    <div className="grid gap-4">
+      <p className="text-sm text-muted-foreground">Configure payment gateways. JazzCash uses HostedCheckout v1.1 — fill all four fields and toggle <strong>Enabled</strong> to activate live payments at checkout.</p>
+      {rows.map((row) => <PaymentConfigCard key={row.id} row={row} onChange={onChange} />)}
+    </div>
+  );
+}
+
+function PaymentConfigCard({ row, onChange }: { row: any; onChange: () => void }) {
+  const [config, setConfig] = useState<Record<string, string>>(row.config ?? {});
+  const [enabled, setEnabled] = useState<boolean>(!!row.enabled);
+  const [sandbox, setSandbox] = useState<boolean>(!!row.sandbox);
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase.from("payment_configs").update({ config, enabled, sandbox, updated_at: new Date().toISOString() }).eq("id", row.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${row.provider} saved`);
+    onChange();
+  }
+
+  const fields = Object.keys(config);
+
+  return (
+    <div className="bg-card rounded-xl ring-1 ring-border p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold capitalize text-lg">{row.provider.replace("_", " ")}</h3>
+          {row.instructions && <p className="text-xs text-muted-foreground mt-1">{row.instructions}</p>}
+        </div>
+        <div className="flex gap-2 items-center text-sm">
+          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={sandbox} onChange={(e) => setSandbox(e.target.checked)} /> Sandbox</label>
+          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> Enabled</label>
+        </div>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {fields.map((k) => (
+          <label key={k} className="block">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1">{k.replace(/_/g, " ")}</span>
+            <input
+              value={config[k] ?? ""}
+              onChange={(e) => setConfig({ ...config, [k]: e.target.value })}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
+            />
+          </label>
+        ))}
+      </div>
+      <button disabled={saving} onClick={save} className="bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold hover:bg-primary-light disabled:opacity-60">
+        {saving ? "Saving..." : "Save"}
+      </button>
+    </div>
+  );
+}
+
 
 function OrdersTable({ orders, onChange }: { orders: any[]; onChange: () => void }) {
   async function updateStatus(id: string, status: typeof ORDER_STATUSES[number]) {
