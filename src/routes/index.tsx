@@ -25,8 +25,10 @@ function Home() {
   return (
     <AppShell>
       {/* Hero */}
-      <section className="hero-gradient">
-        <div className="max-w-7xl mx-auto px-6 py-20 md:py-28 text-center">
+      <section className="hero-gradient relative overflow-hidden">
+        <img src={heroImg} alt="" width={1920} height={1280} className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28 text-center">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-semibold mb-6">
             <span className="size-1.5 rounded-full bg-accent animate-pulse" />
             SECP Registered • SMC-Private Limited
