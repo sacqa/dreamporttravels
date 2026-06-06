@@ -27,7 +27,7 @@ function CheckoutPage() {
   const total = cartTotal(items);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", cnic: "", address: "", notes: "", payment_method: "jazzcash" as const });
+  const [form, setForm] = useState<{ name: string; email: string; phone: string; cnic: string; address: string; notes: string; payment_method: "jazzcash" | "easypaisa" | "bank_transfer" }>({ name: "", email: "", phone: "", cnic: "", address: "", notes: "", payment_method: "jazzcash" });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
