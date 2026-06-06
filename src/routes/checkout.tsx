@@ -68,9 +68,10 @@ function CheckoutPage() {
       );
       if (itemsError) throw itemsError;
       cart.clear();
+      toast.success(`Order ${order.order_number} placed! We'll contact you within 24 hours.`);
       navigate({ to: "/order-confirmed", search: { o: order.order_number } });
     } catch (err: any) {
-      toast.error(err.message ?? "Could not place order");
+      toast.error(err?.message ?? "Could not place order. Please try again.");
     } finally {
       setLoading(false);
     }
