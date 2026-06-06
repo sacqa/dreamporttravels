@@ -41,7 +41,9 @@ export const generateServiceImage = createServerFn({ method: "POST" })
     );
     if (!aiRes.ok) {
       const txt = await aiRes.text().catch(() => "");
-      throw new Error(`AI gateway ${aiRes.status}: ${txt.slice(0, 200)}`);
+      if (aiRes.status === 429) throw new Error("Rate limit hit. Wait a minute and try again.");
+      if (aiRes.status === 402) throw new Error("AI credits exhausted. Top up the workspace to continue.");
+      throw new Error(`AI gateway error (${aiRes.status}). ${txt.slice(0, 160)}`);
     }
     const aiJson = (await aiRes.json()) as {
       data?: Array<{ b64_json?: string }>;
