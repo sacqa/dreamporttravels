@@ -88,7 +88,7 @@ function AdminPage() {
 }
 
 function OrdersTable({ orders, onChange }: { orders: any[]; onChange: () => void }) {
-  async function updateStatus(id: string, status: string) {
+  async function updateStatus(id: string, status: typeof ORDER_STATUSES[number]) {
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(`Order marked ${status}`);
