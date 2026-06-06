@@ -1,9 +1,12 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 import { useCartItems } from "@/lib/cart";
-import { ShoppingBag, Menu, X, Phone } from "lucide-react";
+import { ShoppingBag, Menu, X, Phone, Shield, LogOut, LogIn } from "lucide-react";
 import { useState } from "react";
 import { SITE } from "@/lib/site";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Home" },
@@ -17,6 +20,15 @@ export function Header() {
   const items = useCartItems();
   const count = items.reduce((s, i) => s + i.quantity, 0);
   const [open, setOpen] = useState(false);
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    toast.success("Signed out");
+    navigate({ to: "/" });
+  }
+
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md">
@@ -61,6 +73,31 @@ export function Header() {
               </span>
             )}
           </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="hidden sm:inline-flex items-center gap-1.5 bg-accent text-accent-foreground px-3 py-2 rounded-full text-xs font-semibold hover:opacity-90 transition"
+              title="Admin Dashboard"
+            >
+              <Shield className="h-3.5 w-3.5" /> Admin
+            </Link>
+          )}
+          {user ? (
+            <button
+              onClick={signOut}
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-accent px-2"
+              title="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-accent px-2"
+            >
+              <LogIn className="h-4 w-4" /> Sign In
+            </Link>
+          )}
           <Link
             to="/visas"
             className="hidden sm:inline-flex bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold hover:bg-primary-light transition-colors"
@@ -88,6 +125,16 @@ export function Header() {
               {n.label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link to="/admin" onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-md font-medium bg-accent/10 text-accent">
+              🛡 Admin Dashboard
+            </Link>
+          )}
+          {user ? (
+            <button onClick={() => { setOpen(false); signOut(); }} className="px-3 py-2.5 rounded-md font-medium text-left hover:bg-muted">Sign out</button>
+          ) : (
+            <Link to="/auth" onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-md font-medium hover:bg-muted">Sign in</Link>
+          )}
         </nav>
       )}
     </header>
