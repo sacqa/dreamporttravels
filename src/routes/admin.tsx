@@ -115,7 +115,7 @@ function OrdersTable({ orders, onChange }: { orders: any[]; onChange: () => void
               <td className="px-4 py-3">
                 <select
                   value={o.status}
-                  onChange={(e) => updateStatus(o.id, e.target.value)}
+                  onChange={(e) => updateStatus(o.id, e.target.value as typeof ORDER_STATUSES[number])}
                   className="text-xs border border-border rounded px-2 py-1 bg-background"
                 >
                   {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
