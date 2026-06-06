@@ -73,6 +73,31 @@ export function Header() {
               </span>
             )}
           </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="hidden sm:inline-flex items-center gap-1.5 bg-accent text-accent-foreground px-3 py-2 rounded-full text-xs font-semibold hover:opacity-90 transition"
+              title="Admin Dashboard"
+            >
+              <Shield className="h-3.5 w-3.5" /> Admin
+            </Link>
+          )}
+          {user ? (
+            <button
+              onClick={signOut}
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-accent px-2"
+              title="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-accent px-2"
+            >
+              <LogIn className="h-4 w-4" /> Sign In
+            </Link>
+          )}
           <Link
             to="/visas"
             className="hidden sm:inline-flex bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold hover:bg-primary-light transition-colors"
@@ -81,6 +106,40 @@ export function Header() {
           </Link>
           <button
             className="lg:hidden h-10 w-10 inline-flex items-center justify-center rounded-full hover:bg-muted"
+            onClick={() => setOpen(!open)}
+            aria-label="Menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+      {open && (
+        <nav className="lg:hidden border-t border-border bg-background px-4 py-3 flex flex-col gap-1">
+          {nav.map((n) => (
+            <Link
+              key={n.to}
+              to={n.to}
+              onClick={() => setOpen(false)}
+              className="px-3 py-2.5 rounded-md font-medium hover:bg-muted"
+            >
+              {n.label}
+            </Link>
+          ))}
+          {isAdmin && (
+            <Link to="/admin" onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-md font-medium bg-accent/10 text-accent">
+              🛡 Admin Dashboard
+            </Link>
+          )}
+          {user ? (
+            <button onClick={() => { setOpen(false); signOut(); }} className="px-3 py-2.5 rounded-md font-medium text-left hover:bg-muted">Sign out</button>
+          ) : (
+            <Link to="/auth" onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-md font-medium hover:bg-muted">Sign in</Link>
+          )}
+        </nav>
+      )}
+    </header>
+  );
+}
             onClick={() => setOpen(!open)}
             aria-label="Menu"
           >
