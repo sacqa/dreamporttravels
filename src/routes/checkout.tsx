@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { cart, cartTotal, useCartItems } from "@/lib/cart";
 import { formatPKR } from "@/lib/site";
@@ -6,6 +7,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { initiateJazzCashPayment } from "@/lib/payment.functions";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -26,6 +28,7 @@ function CheckoutPage() {
   const items = useCartItems();
   const total = cartTotal(items);
   const navigate = useNavigate();
+  const initJazz = useServerFn(initiateJazzCashPayment);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<{ name: string; email: string; phone: string; cnic: string; address: string; notes: string; payment_method: "jazzcash" | "easypaisa" | "bank_transfer" }>({ name: "", email: "", phone: "", cnic: "", address: "", notes: "", payment_method: "jazzcash" });
 
@@ -68,6 +71,21 @@ function CheckoutPage() {
       );
       if (itemsError) throw itemsError;
       cart.clear();
+
+      // If JazzCash is wired up, redirect to JazzCash form-post.
+      if (parsed.data.payment_method === "jazzcash") {
+        try {
+          const res = await initJazz({ data: { order_id: order.id } });
+          if (res.mode === "redirect") {
+            postToJazzCash(res.action, res.fields);
+            return;
+          }
+        } catch (e) {
+          // fall through to manual flow
+          console.warn("JazzCash init failed, falling back to manual", e);
+        }
+      }
+
       toast.success(`Order ${order.order_number} placed! We'll contact you within 24 hours.`);
       navigate({ to: "/order-confirmed", search: { o: order.order_number } });
     } catch (err: any) {
@@ -110,7 +128,7 @@ function CheckoutPage() {
                 </label>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">After confirmation, you'll receive payment instructions via WhatsApp/email. Our representative will guide you through the transaction and documentation.</p>
+            <p className="text-xs text-muted-foreground">JazzCash payments are processed securely via the JazzCash gateway when enabled by the admin. Otherwise our team will contact you within 24 hours with payment instructions.</p>
           </div>
           <aside className="bg-card rounded-2xl p-6 ring-1 ring-border sticky top-24">
             <h3 className="font-semibold mb-4">Order Summary</h3>
@@ -133,6 +151,21 @@ function CheckoutPage() {
       <style>{`.input{width:100%;padding:.65rem .85rem;border:1px solid var(--border);border-radius:.5rem;background:var(--background);font-size:.875rem;outline:none}.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 20%,transparent)}`}</style>
     </AppShell>
   );
+}
+
+function postToJazzCash(action: string, fields: Record<string, string>) {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = action;
+  for (const [k, v] of Object.entries(fields)) {
+    const i = document.createElement("input");
+    i.type = "hidden";
+    i.name = k;
+    i.value = v;
+    form.appendChild(i);
+  }
+  document.body.appendChild(form);
+  form.submit();
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {

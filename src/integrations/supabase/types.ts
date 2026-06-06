@@ -103,6 +103,8 @@ export type Database = {
           notes: string | null
           order_number: string
           payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_payload: Json | null
+          payment_ref: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_pkr: number
           total_pkr: number
@@ -119,6 +121,8 @@ export type Database = {
           notes?: string | null
           order_number?: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_payload?: Json | null
+          payment_ref?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_pkr: number
           total_pkr: number
@@ -135,10 +139,42 @@ export type Database = {
           notes?: string | null
           order_number?: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_payload?: Json | null
+          payment_ref?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_pkr?: number
           total_pkr?: number
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      payment_configs: {
+        Row: {
+          config: Json
+          enabled: boolean
+          id: string
+          instructions: string | null
+          provider: string
+          sandbox: boolean
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          enabled?: boolean
+          id?: string
+          instructions?: string | null
+          provider: string
+          sandbox?: boolean
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          enabled?: boolean
+          id?: string
+          instructions?: string | null
+          provider?: string
+          sandbox?: boolean
+          updated_at?: string
         }
         Relationships: []
       }
