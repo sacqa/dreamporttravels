@@ -62,8 +62,8 @@ export const generateServiceImage = createServerFn({ method: "POST" })
       .from("service-images")
       .getPublicUrl(path);
 
-    const { error: updErr } = await supabaseAdmin
-      .from(data.table)
+    const { error: updErr } = await (supabaseAdmin
+      .from(data.table) as any)
       .update({ image_url: pub.publicUrl })
       .eq("id", data.id);
     if (updErr) throw new Error(updErr.message);
