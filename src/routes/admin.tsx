@@ -25,7 +25,7 @@ type Row = {
   active: boolean;
 };
 
-const ORDER_STATUSES = ["pending", "confirmed", "processing", "completed", "cancelled", "refunded"] as const;
+const ORDER_STATUSES = ["pending", "paid", "processing", "completed", "cancelled"] as const;
 
 function AdminPage() {
   const [tab, setTab] = useState<"orders" | "visas" | "umrah">("orders");
