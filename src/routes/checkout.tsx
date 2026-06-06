@@ -36,9 +36,11 @@ function CheckoutPage() {
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Invalid form");
     setLoading(true);
     try {
+      const { data: userData } = await supabase.auth.getUser();
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
+          user_id: userData.user?.id ?? null,
           customer_name: parsed.data.name,
           customer_email: parsed.data.email,
           customer_phone: parsed.data.phone,
