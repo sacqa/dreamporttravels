@@ -6,6 +6,8 @@ import { formatPKR, SITE } from "@/lib/site";
 import { ArrowRight, ShieldCheck, Clock, Globe2, Headphones, CheckCircle2, Star } from "lucide-react";
 import { cart } from "@/lib/cart";
 import { toast } from "sonner";
+import heroImg from "@/assets/hero-travel.jpg";
+import umrahImg from "@/assets/umrah-haram.jpg";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([
@@ -23,8 +25,10 @@ function Home() {
   return (
     <AppShell>
       {/* Hero */}
-      <section className="hero-gradient">
-        <div className="max-w-7xl mx-auto px-6 py-20 md:py-28 text-center">
+      <section className="hero-gradient relative overflow-hidden">
+        <img src={heroImg} alt="" width={1920} height={1280} className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28 text-center">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-semibold mb-6">
             <span className="size-1.5 rounded-full bg-accent animate-pulse" />
             SECP Registered • SMC-Private Limited
@@ -84,14 +88,20 @@ function Home() {
       </section>
 
       {/* Umrah */}
-      <section className="py-20">
+      <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Pilgrimage Services</span>
-            <h2 className="text-3xl md:text-4xl font-display font-semibold mt-3">Curated Umrah Packages</h2>
-            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              From economy to luxury — every package includes visa, flights, hotels, transport and Ziyarat.
-            </p>
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-14">
+            <div className="relative rounded-3xl overflow-hidden ring-1 ring-border aspect-[4/3]">
+              <img src={umrahImg} alt="Pilgrims at Masjid al-Haram" loading="lazy" width={1600} height={1200} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/50 to-transparent" />
+            </div>
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Pilgrimage Services</span>
+              <h2 className="text-3xl md:text-4xl font-display font-semibold mt-3">Curated Umrah Packages</h2>
+              <p className="mt-3 text-muted-foreground">
+                From economy to luxury — every package includes visa, flights, hotels, transport and Ziyarat. Group and family discounts available.
+              </p>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {umrah.map((p) => {
