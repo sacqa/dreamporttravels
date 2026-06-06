@@ -9,6 +9,13 @@ import { Check, Clock, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/visas/$slug")({
   loader: ({ context, params }) => context.queryClient.ensureQueryData(visaBySlugQuery(params.slug)),
+  head: ({ params }) => ({
+    meta: [
+      { title: `${params.slug.toUpperCase()} Visa from Pakistan — DreamPort Travels` },
+      { name: "description", content: `Apply online for a ${params.slug} visa from Pakistan. Transparent PKR pricing, fast processing, and dedicated support.` },
+      { property: "og:title", content: `${params.slug.toUpperCase()} Visa — DreamPort Travels` },
+    ],
+  }),
   component: VisaDetail,
 });
 
