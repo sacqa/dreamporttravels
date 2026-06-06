@@ -88,14 +88,20 @@ function Home() {
       </section>
 
       {/* Umrah */}
-      <section className="py-20">
+      <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Pilgrimage Services</span>
-            <h2 className="text-3xl md:text-4xl font-display font-semibold mt-3">Curated Umrah Packages</h2>
-            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              From economy to luxury — every package includes visa, flights, hotels, transport and Ziyarat.
-            </p>
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-14">
+            <div className="relative rounded-3xl overflow-hidden ring-1 ring-border aspect-[4/3]">
+              <img src={umrahImg} alt="Pilgrims at Masjid al-Haram" loading="lazy" width={1600} height={1200} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/50 to-transparent" />
+            </div>
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Pilgrimage Services</span>
+              <h2 className="text-3xl md:text-4xl font-display font-semibold mt-3">Curated Umrah Packages</h2>
+              <p className="mt-3 text-muted-foreground">
+                From economy to luxury — every package includes visa, flights, hotels, transport and Ziyarat. Group and family discounts available.
+              </p>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {umrah.map((p) => {
