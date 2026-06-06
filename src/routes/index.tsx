@@ -6,6 +6,8 @@ import { formatPKR, SITE } from "@/lib/site";
 import { ArrowRight, ShieldCheck, Clock, Globe2, Headphones, CheckCircle2, Star } from "lucide-react";
 import { cart } from "@/lib/cart";
 import { toast } from "sonner";
+import heroImg from "@/assets/hero-travel.jpg";
+import umrahImg from "@/assets/umrah-haram.jpg";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => Promise.all([
