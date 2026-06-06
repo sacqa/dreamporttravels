@@ -1,9 +1,12 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 import { useCartItems } from "@/lib/cart";
-import { ShoppingBag, Menu, X, Phone } from "lucide-react";
+import { ShoppingBag, Menu, X, Phone, Shield, LogOut, LogIn } from "lucide-react";
 import { useState } from "react";
 import { SITE } from "@/lib/site";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Home" },
@@ -17,6 +20,15 @@ export function Header() {
   const items = useCartItems();
   const count = items.reduce((s, i) => s + i.quantity, 0);
   const [open, setOpen] = useState(false);
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    toast.success("Signed out");
+    navigate({ to: "/" });
+  }
+
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md">
