@@ -30,8 +30,12 @@ function VisasPage() {
                 params={{ slug: v.slug }}
                 className="group bg-card rounded-2xl p-5 ring-1 ring-border hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
-                <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-accent/10 to-primary/10 mb-4 flex items-center justify-center text-7xl">
-                  {v.flag_emoji}
+                <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-accent/10 to-primary/10 mb-4 flex items-center justify-center text-7xl overflow-hidden relative">
+                  {v.image_url ? (
+                    <img src={v.image_url} alt={v.country} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                  ) : (
+                    <span>{v.flag_emoji}</span>
+                  )}
                 </div>
                 <h3 className="font-semibold text-lg">{v.country}</h3>
                 <p className="text-sm text-muted-foreground">{v.visa_type}</p>
