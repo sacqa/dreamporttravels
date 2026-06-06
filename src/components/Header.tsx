@@ -140,27 +140,3 @@ export function Header() {
     </header>
   );
 }
-            onClick={() => setOpen(!open)}
-            aria-label="Menu"
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-      </div>
-      {open && (
-        <nav className="lg:hidden border-t border-border bg-background px-4 py-3 flex flex-col gap-1">
-          {nav.map((n) => (
-            <Link
-              key={n.to}
-              to={n.to}
-              onClick={() => setOpen(false)}
-              className="px-3 py-2.5 rounded-md font-medium hover:bg-muted"
-            >
-              {n.label}
-            </Link>
-          ))}
-        </nav>
-      )}
-    </header>
-  );
-}
