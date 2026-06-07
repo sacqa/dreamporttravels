@@ -28,27 +28,33 @@ type Row = {
 const ORDER_STATUSES = ["pending", "paid", "processing", "completed", "cancelled"] as const;
 
 function AdminPage() {
-  const [tab, setTab] = useState<"orders" | "visas" | "umrah" | "inquiries" | "payments">("orders");
+  const [tab, setTab] = useState<"orders" | "visas" | "umrah" | "inquiries" | "payments" | "content" | "customers">("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [visas, setVisas] = useState<Row[]>([]);
   const [umrah, setUmrah] = useState<Row[]>([]);
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [content, setContent] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
   const [authed, setAuthed] = useState<boolean | null>(null);
 
   const refresh = async () => {
-    const [o, v, u, iq, pc] = await Promise.all([
+    const [o, v, u, iq, pc, sc, cu] = await Promise.all([
       supabase.from("orders").select("*, order_items(*)").order("created_at", { ascending: false }).limit(100),
       supabase.from("visa_services").select("*").order("country"),
       supabase.from("umrah_packages").select("*").order("price_pkr"),
       supabase.from("inquiries").select("*").order("created_at", { ascending: false }).limit(100),
       supabase.from("payment_configs").select("*").order("provider"),
+      supabase.from("site_content").select("*").order("category"),
+      supabase.from("profiles").select("*").order("full_name").limit(200),
     ]);
     setOrders(o.data ?? []);
     setVisas((v.data ?? []) as any);
     setUmrah((u.data ?? []) as any);
     setInquiries(iq.data ?? []);
     setPayments(pc.data ?? []);
+    setContent(sc.data ?? []);
+    setCustomers(cu.data ?? []);
   };
 
   useEffect(() => {
@@ -72,16 +78,16 @@ function AdminPage() {
   );
 
   const counts: Record<typeof tab, number> = {
-    orders: orders.length, visas: visas.length, umrah: umrah.length, inquiries: inquiries.length, payments: payments.length,
+    orders: orders.length, visas: visas.length, umrah: umrah.length, inquiries: inquiries.length, payments: payments.length, content: content.length, customers: customers.length,
   };
 
   return (
     <AppShell>
-      <PageHeader title="Admin Dashboard" subtitle="Full control over orders, services, inquiries and payments" />
+      <PageHeader title="Admin Dashboard" subtitle="Full control over orders, services, content, customers and payments" />
       <section className="py-6">
         <div className="max-w-7xl mx-auto px-6">
           <div className="inline-flex flex-wrap gap-1 bg-muted rounded-full p-1 mb-6">
-            {(["orders","visas","umrah","inquiries","payments"] as const).map((t) => (
+            {(["orders","visas","umrah","content","customers","inquiries","payments"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)} className={`px-5 py-2 rounded-full text-sm font-semibold capitalize transition ${tab===t?"bg-card shadow":"text-muted-foreground"}`}>
                 {t} ({counts[t]})
               </button>
@@ -91,11 +97,126 @@ function AdminPage() {
           {tab === "orders" && <OrdersTable orders={orders} onChange={refresh} />}
           {tab === "visas" && <ServicesTable rows={visas} table="visa_services" onChange={refresh} />}
           {tab === "umrah" && <ServicesTable rows={umrah} table="umrah_packages" onChange={refresh} />}
+          {tab === "content" && <SiteContentTable rows={content} onChange={refresh} />}
+          {tab === "customers" && <CustomersTable rows={customers} />}
           {tab === "inquiries" && <InquiriesTable rows={inquiries} />}
           {tab === "payments" && <PaymentsTable rows={payments} onChange={refresh} />}
         </div>
       </section>
     </AppShell>
+  );
+}
+
+function CustomersTable({ rows }: { rows: any[] }) {
+  if (rows.length === 0) return <p className="text-center text-muted-foreground py-12">No customers yet.</p>;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm bg-card rounded-xl ring-1 ring-border">
+        <thead className="bg-muted/40 text-left">
+          <tr>{["Name", "Phone", "Joined"].map((h) => <th key={h} className="px-4 py-3 font-semibold">{h}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr key={c.id} className="border-t border-border">
+              <td className="px-4 py-3">{c.full_name || <span className="text-muted-foreground italic">No name</span>}</td>
+              <td className="px-4 py-3">{c.phone || "—"}</td>
+              <td className="px-4 py-3 text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SiteContentTable({ rows, onChange }: { rows: any[]; onChange: () => void }) {
+  if (rows.length === 0) return <p className="text-center text-muted-foreground py-12">No content blocks defined.</p>;
+  const grouped = rows.reduce((acc: Record<string, any[]>, r) => { (acc[r.category] ??= []).push(r); return acc; }, {});
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-muted-foreground">Edit content shown on the public website. Changes appear within 5 minutes (or after a refresh).</p>
+      {Object.entries(grouped).map(([cat, list]) => (
+        <div key={cat}>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">{cat}</h3>
+          <div className="grid gap-3">
+            {list.map((r) => <SiteContentCard key={r.id} row={r} onChange={onChange} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SiteContentCard({ row, onChange }: { row: any; onChange: () => void }) {
+  const [value, setValue] = useState<any>(row.value);
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase.from("site_content").update({ value }).eq("id", row.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${row.label} saved`);
+    onChange();
+  }
+
+  const keys = value && typeof value === "object" && !Array.isArray(value) ? Object.keys(value) : null;
+
+  return (
+    <div className="bg-card rounded-xl ring-1 ring-border p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="font-semibold">{row.label}</h4>
+        <code className="text-[10px] text-muted-foreground">{row.key}</code>
+      </div>
+      {keys ? (
+        <div className="grid sm:grid-cols-2 gap-3">
+          {keys.map((k) => {
+            const v = value[k];
+            const isBool = typeof v === "boolean";
+            const isLong = typeof v === "string" && (v.length > 60 || v.includes("\n"));
+            const isArr = Array.isArray(v) || (v && typeof v === "object");
+            return (
+              <label key={k} className={isLong || isArr ? "sm:col-span-2 block" : "block"}>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1">{k.replace(/_/g, " ")}</span>
+                {isBool ? (
+                  <label className="inline-flex items-center gap-2"><input type="checkbox" checked={v} onChange={(e) => setValue({ ...value, [k]: e.target.checked })} /> {v ? "Enabled" : "Disabled"}</label>
+                ) : isArr ? (
+                  <textarea
+                    value={JSON.stringify(v, null, 2)}
+                    onChange={(e) => { try { setValue({ ...value, [k]: JSON.parse(e.target.value) }); } catch { /* ignore */ } }}
+                    rows={6}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-xs font-mono"
+                  />
+                ) : isLong ? (
+                  <textarea
+                    value={String(v ?? "")}
+                    onChange={(e) => setValue({ ...value, [k]: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
+                  />
+                ) : (
+                  <input
+                    value={String(v ?? "")}
+                    onChange={(e) => setValue({ ...value, [k]: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
+                  />
+                )}
+              </label>
+            );
+          })}
+        </div>
+      ) : (
+        <textarea
+          value={JSON.stringify(value, null, 2)}
+          onChange={(e) => { try { setValue(JSON.parse(e.target.value)); } catch { /* ignore */ } }}
+          rows={8}
+          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-xs font-mono"
+        />
+      )}
+      <button disabled={saving} onClick={save} className="bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold hover:bg-primary-light disabled:opacity-60">
+        {saving ? "Saving..." : "Save"}
+      </button>
+    </div>
   );
 }
 
