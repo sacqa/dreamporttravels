@@ -40,9 +40,7 @@ export function Header() {
           <span className="opacity-80">📍 {SITE.shortAddress}</span>
         </div>
         <div className="flex items-center gap-3 opacity-90">
-          <span className="text-[10px] uppercase tracking-widest">Secure Payments:</span>
-          <span className="text-[10px] font-bold">JazzCash</span>
-          <span className="text-[10px] font-bold">Easypaisa</span>
+          <span className="text-[10px] uppercase tracking-widest">🔒 Secure Online Payments</span>
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
