@@ -6,6 +6,7 @@ import { formatPKR, SITE } from "@/lib/site";
 import { ArrowRight, ShieldCheck, Clock, Globe2, Headphones, CheckCircle2, Star } from "lucide-react";
 import { cart } from "@/lib/cart";
 import { toast } from "sonner";
+import { useContentValue } from "@/hooks/use-site-content";
 import heroImg from "@/assets/hero-travel.jpg";
 import umrahImg from "@/assets/umrah-haram.jpg";
 
@@ -21,9 +22,23 @@ function Home() {
   const { data: visas } = useSuspenseQuery(visasQuery);
   const { data: umrah } = useSuspenseQuery(umrahQuery);
   const featured = visas.filter((v) => v.featured).slice(0, 4);
+  const hero = useContentValue<{ title: string; subtitle: string; cta_label: string; cta_link: string; secondary_label: string; secondary_link: string }>("home.hero", {
+    title: "Your Gateway to the Global Horizon.",
+    subtitle: SITE.description,
+    cta_label: "Browse Visa Services",
+    cta_link: "/visas",
+    secondary_label: "Umrah Packages",
+    secondary_link: "/umrah",
+  });
+  const banner = useContentValue<{ enabled: boolean; text: string; link: string; background: string; color: string }>("home.banner", { enabled: false, text: "", link: "/", background: "#0f3460", color: "#fff" });
 
   return (
     <AppShell>
+      {banner.enabled && banner.text && (
+        <a href={banner.link || "#"} style={{ background: banner.background, color: banner.color }} className="block text-center text-sm font-semibold py-2.5 px-4 hover:opacity-90 transition">
+          {banner.text}
+        </a>
+      )}
       {/* Hero */}
       <section className="hero-gradient relative overflow-hidden">
         <img src={heroImg} alt="" width={1920} height={1280} className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none" />
@@ -34,18 +49,18 @@ function Home() {
             SECP Registered • SMC-Private Limited
           </span>
           <h1 className="text-5xl md:text-7xl font-display font-semibold leading-[1.05] text-balance max-w-4xl mx-auto">
-            Your Gateway to the <span className="text-accent">Global Horizon.</span>
+            {hero.title}
           </h1>
           <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            {SITE.description}
+            {hero.subtitle}
           </p>
           <div className="mt-10 flex flex-wrap gap-3 justify-center">
-            <Link to="/visas" className="bg-primary text-primary-foreground px-7 py-3.5 rounded-full font-semibold hover:bg-primary-light transition-colors inline-flex items-center gap-2">
-              Browse Visa Services <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link to="/umrah" className="bg-card text-foreground border border-border px-7 py-3.5 rounded-full font-semibold hover:bg-muted transition-colors">
-              Umrah Packages
-            </Link>
+            <a href={hero.cta_link} className="bg-primary text-primary-foreground px-7 py-3.5 rounded-full font-semibold hover:bg-primary-light transition-colors inline-flex items-center gap-2">
+              {hero.cta_label} <ArrowRight className="h-4 w-4" />
+            </a>
+            <a href={hero.secondary_link} className="bg-card text-foreground border border-border px-7 py-3.5 rounded-full font-semibold hover:bg-muted transition-colors">
+              {hero.secondary_label}
+            </a>
           </div>
           <div className="mt-12 flex flex-wrap gap-6 justify-center text-sm text-muted-foreground">
             <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-success" /> Secure Online Payments</span>

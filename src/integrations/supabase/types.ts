@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_addresses: {
+        Row: {
+          city: string
+          created_at: string
+          full_name: string
+          id: string
+          is_default: boolean
+          label: string
+          line1: string
+          line2: string | null
+          phone: string
+          postal_code: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          full_name: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          line1: string
+          line2?: string | null
+          phone: string
+          postal_code?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          line1?: string
+          line2?: string | null
+          phone?: string
+          postal_code?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       inquiries: {
         Row: {
           created_at: string
@@ -196,6 +241,33 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+        }
+        Relationships: []
+      }
+      site_content: {
+        Row: {
+          category: string
+          id: string
+          key: string
+          label: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          category?: string
+          id?: string
+          key: string
+          label: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          category?: string
+          id?: string
+          key?: string
+          label?: string
+          updated_at?: string
+          value?: Json
         }
         Relationships: []
       }

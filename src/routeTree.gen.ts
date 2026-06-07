@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VisasRouteImport } from './routes/visas'
 import { Route as UmrahRouteImport } from './routes/umrah'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as OrderConfirmedRouteImport } from './routes/order-confirmed'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
@@ -19,8 +21,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as LegalRouteImport } from './routes/$legal'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VisasSlugRouteImport } from './routes/visas.$slug'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 
 const VisasRoute = VisasRouteImport.update({
   id: '/visas',
@@ -32,9 +36,19 @@ const UmrahRoute = UmrahRouteImport.update({
   path: '/umrah',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrderConfirmedRoute = OrderConfirmedRouteImport.update({
   id: '/order-confirmed',
   path: '/order-confirmed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -72,6 +86,10 @@ const LegalRoute = LegalRouteImport.update({
   path: '/$legal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -81,6 +99,11 @@ const VisasSlugRoute = VisasSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => VisasRoute,
+} as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -92,9 +115,12 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/order-confirmed': typeof OrderConfirmedRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/umrah': typeof UmrahRoute
   '/visas': typeof VisasRouteWithChildren
+  '/account': typeof AuthenticatedAccountRoute
   '/visas/$slug': typeof VisasSlugRoute
 }
 export interface FileRoutesByTo {
@@ -106,14 +132,18 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/order-confirmed': typeof OrderConfirmedRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/umrah': typeof UmrahRoute
   '/visas': typeof VisasRouteWithChildren
+  '/account': typeof AuthenticatedAccountRoute
   '/visas/$slug': typeof VisasSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/$legal': typeof LegalRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
@@ -121,9 +151,12 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/order-confirmed': typeof OrderConfirmedRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/umrah': typeof UmrahRoute
   '/visas': typeof VisasRouteWithChildren
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/visas/$slug': typeof VisasSlugRoute
 }
 export interface FileRouteTypes {
@@ -137,9 +170,12 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/contact'
+    | '/forgot-password'
     | '/order-confirmed'
+    | '/reset-password'
     | '/umrah'
     | '/visas'
+    | '/account'
     | '/visas/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -151,13 +187,17 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/contact'
+    | '/forgot-password'
     | '/order-confirmed'
+    | '/reset-password'
     | '/umrah'
     | '/visas'
+    | '/account'
     | '/visas/$slug'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/$legal'
     | '/about'
     | '/admin'
@@ -165,14 +205,18 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/contact'
+    | '/forgot-password'
     | '/order-confirmed'
+    | '/reset-password'
     | '/umrah'
     | '/visas'
+    | '/_authenticated/account'
     | '/visas/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LegalRoute: typeof LegalRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
@@ -180,7 +224,9 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   ContactRoute: typeof ContactRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   OrderConfirmedRoute: typeof OrderConfirmedRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   UmrahRoute: typeof UmrahRoute
   VisasRoute: typeof VisasRouteWithChildren
 }
@@ -201,11 +247,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UmrahRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order-confirmed': {
       id: '/order-confirmed'
       path: '/order-confirmed'
       fullPath: '/order-confirmed'
       preLoaderRoute: typeof OrderConfirmedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -257,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -271,8 +338,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VisasSlugRouteImport
       parentRoute: typeof VisasRoute
     }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface VisasRouteChildren {
   VisasSlugRoute: typeof VisasSlugRoute
@@ -286,6 +371,7 @@ const VisasRouteWithChildren = VisasRoute._addFileChildren(VisasRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LegalRoute: LegalRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
@@ -293,7 +379,9 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   ContactRoute: ContactRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   OrderConfirmedRoute: OrderConfirmedRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   UmrahRoute: UmrahRoute,
   VisasRoute: VisasRouteWithChildren,
 }
