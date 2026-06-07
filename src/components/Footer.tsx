@@ -63,8 +63,7 @@ export function Footer() {
           <p>© {new Date().getFullYear()} {SITE.legalName}. All rights reserved.</p>
           <div className="flex gap-4">
             <span>🔒 SSL Encrypted</span>
-            <span>JazzCash Integrated</span>
-            <span>Easypaisa Ready</span>
+            <span>Secure Online Payments</span>
           </div>
         </div>
       </div>
