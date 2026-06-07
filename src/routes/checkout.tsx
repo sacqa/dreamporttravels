@@ -121,14 +121,26 @@ function CheckoutPage() {
 
             <h3 className="font-semibold pt-4">Payment Method</h3>
             <div className="grid sm:grid-cols-3 gap-3">
-              {(["jazzcash", "easypaisa", "bank_transfer"] as const).map((m) => (
-                <label key={m} className={`border-2 rounded-xl p-4 cursor-pointer text-center font-semibold text-sm ${form.payment_method === m ? "border-accent bg-accent/5" : "border-border"}`}>
-                  <input type="radio" name="pm" value={m} checked={form.payment_method === m} onChange={() => setForm({ ...form, payment_method: m })} className="sr-only" />
-                  {m === "jazzcash" ? "JazzCash" : m === "easypaisa" ? "Easypaisa" : "Bank Transfer"}
-                </label>
-              ))}
+              {([
+                { id: "jazzcash", label: "JazzCash", sub: "Mobile wallet", color: "border-[#ee2e3a]" },
+                { id: "easypaisa", label: "Easypaisa", sub: "Mobile wallet", color: "border-[#00a651]" },
+                { id: "bank_transfer", label: "Bank Transfer", sub: "Direct deposit", color: "border-primary" },
+              ] as const).map((m) => {
+                const active = form.payment_method === m.id;
+                return (
+                  <label key={m.id} className={`border-2 rounded-xl p-4 cursor-pointer text-center transition ${active ? `${m.color} bg-accent/5 shadow-sm` : "border-border hover:border-muted-foreground/40"}`}>
+                    <input type="radio" name="pm" value={m.id} checked={active} onChange={() => setForm({ ...form, payment_method: m.id })} className="sr-only" />
+                    <div className="font-semibold text-sm">{m.label}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">{m.sub}</div>
+                  </label>
+                );
+              })}
             </div>
-            <p className="text-xs text-muted-foreground">JazzCash payments are processed securely via the JazzCash gateway when enabled by the admin. Otherwise our team will contact you within 24 hours with payment instructions.</p>
+            <p className="text-xs text-muted-foreground">
+              {form.payment_method === "jazzcash" && "JazzCash redirects you to the secure gateway when the admin has it enabled. Otherwise our team will contact you within 24 hours with payment instructions."}
+              {form.payment_method === "easypaisa" && "Easypaisa is currently in demo mode — place your order and our team will contact you within 24 hours with payment instructions."}
+              {form.payment_method === "bank_transfer" && "Bank account details will be sent to your email immediately after you place the order."}
+            </p>
           </div>
           <aside className="bg-card rounded-2xl p-6 ring-1 ring-border sticky top-24">
             <h3 className="font-semibold mb-4">Order Summary</h3>

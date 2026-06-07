@@ -18,7 +18,7 @@ function AboutPage() {
             DreamPort Travels (SMC-Private) Limited is a Pakistani travel services company registered under the Securities & Exchange Commission of Pakistan (SECP) as a Single Member Company. From our office in Depalpur, District Okara, we serve clients across Punjab and beyond with two specialised practice areas: international visa processing and Umrah pilgrimage management.
           </p>
           <p>
-            Our mission is simple: make international travel accessible, transparent and stress-free for ordinary Pakistanis. We combine in-person consultation at our physical office with a fully digital booking and payment experience powered by JazzCash and Easypaisa — so customers from any corner of the country can engage with us conveniently and securely.
+            Our mission is simple: make international travel accessible, transparent and stress-free for ordinary Pakistanis. We combine in-person consultation at our physical office with a fully digital booking and secure online payment experience — so customers from any corner of the country can engage with us conveniently and securely.
           </p>
           <h2>Our Commitment</h2>
           <ul>
