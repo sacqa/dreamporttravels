@@ -48,6 +48,9 @@ function AuthPage() {
             <button type="button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="w-full text-sm text-muted-foreground hover:text-accent">
               {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
             </button>
+            {mode === "signin" && (
+              <Link to="/forgot-password" className="block text-center text-xs text-muted-foreground hover:text-accent">Forgot password?</Link>
+            )}
           </form>
         </div>
       </section>
