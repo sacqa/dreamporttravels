@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 import { useCartItems } from "@/lib/cart";
-import { ShoppingBag, Menu, X, Phone, Shield, LogOut, LogIn } from "lucide-react";
+import { ShoppingBag, Menu, X, Phone, Shield, LogOut, LogIn, User } from "lucide-react";
 import { useState } from "react";
 import { SITE } from "@/lib/site";
 import { useAuth } from "@/hooks/use-auth";
@@ -81,13 +81,22 @@ export function Header() {
             </Link>
           )}
           {user ? (
-            <button
-              onClick={signOut}
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-accent px-2"
-              title="Sign out"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+            <>
+              <Link
+                to="/account"
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-accent px-2"
+                title="My Account"
+              >
+                <User className="h-4 w-4" /> Account
+              </Link>
+              <button
+                onClick={signOut}
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-accent px-2"
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </>
           ) : (
             <Link
               to="/auth"
@@ -129,7 +138,10 @@ export function Header() {
             </Link>
           )}
           {user ? (
-            <button onClick={() => { setOpen(false); signOut(); }} className="px-3 py-2.5 rounded-md font-medium text-left hover:bg-muted">Sign out</button>
+            <>
+              <Link to="/account" onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-md font-medium hover:bg-muted">My Account</Link>
+              <button onClick={() => { setOpen(false); signOut(); }} className="px-3 py-2.5 rounded-md font-medium text-left hover:bg-muted">Sign out</button>
+            </>
           ) : (
             <Link to="/auth" onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-md font-medium hover:bg-muted">Sign in</Link>
           )}
