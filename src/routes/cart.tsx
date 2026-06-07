@@ -58,7 +58,7 @@ function CartPage() {
             <Link to="/checkout" className="mt-6 w-full bg-primary text-primary-foreground py-3 rounded-lg font-semibold text-center block hover:bg-primary-light">
               Proceed to Checkout
             </Link>
-            <p className="text-xs text-muted-foreground mt-3 text-center">🔒 Secured by JazzCash & Easypaisa</p>
+            <p className="text-xs text-muted-foreground mt-3 text-center">🔒 SSL Secured Checkout</p>
           </aside>
         </div>
       </section>
