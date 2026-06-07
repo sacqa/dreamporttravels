@@ -156,7 +156,7 @@ function Home() {
           </div>
           <div className="grid gap-4">
             {[
-              { icon: ShieldCheck, t: "JazzCash & Easypaisa Integrated", d: "Secure online payments with instant confirmation." },
+              { icon: ShieldCheck, t: "Secure Online Payments", d: "Multiple safe payment options with instant confirmation." },
               { icon: Headphones, t: "Dedicated Support", d: "Direct WhatsApp & phone access to our team." },
               { icon: Clock, t: "Transparent Processing", d: "Clear timelines and itemized pricing for every service." },
             ].map(({ icon: Icon, t, d }) => (
