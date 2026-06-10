@@ -1,14 +1,15 @@
-// DreamPort Travels — minimal offline service worker.
+// DreamPort Travels — service worker with offline fallback.
 // Strategy:
-//   - HTML navigations: NetworkFirst (always try fresh, fall back to cached shell offline).
-//   - Hashed build assets + same-origin images/fonts: CacheFirst (immutable, hashed URLs).
-//   - Everything else (Supabase, APIs, cross-origin): bypass.
-// autoUpdate: skipWaiting + clientsClaim means a new SW takes over immediately.
+//   - HTML navigations: NetworkFirst; if both network + per-URL cache miss, serve /offline.html.
+//   - Hashed build assets + same-origin images/fonts: CacheFirst.
+//   - Cross-origin (Supabase, fonts) and /api, /_serverFn: bypass (no caching of live data).
+//   - autoUpdate: skipWaiting + clientsClaim so new versions take over immediately.
 
-const VERSION = "v1";
+const VERSION = "v2";
 const HTML_CACHE = `dpt-html-${VERSION}`;
 const ASSET_CACHE = `dpt-assets-${VERSION}`;
-const OFFLINE_URL = "/";
+const OFFLINE_URL = "/offline.html";
+const PRECACHE_ROUTES = ["/", "/visas", "/umrah", "/checkout", "/contact", OFFLINE_URL];
 
 const OWN_CACHES = [HTML_CACHE, ASSET_CACHE];
 
@@ -16,7 +17,11 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(HTML_CACHE);
-      try { await cache.add(new Request(OFFLINE_URL, { cache: "reload" })); } catch (_) {}
+      await Promise.all(
+        PRECACHE_ROUTES.map((url) =>
+          cache.add(new Request(url, { cache: "reload" })).catch(() => {}),
+        ),
+      );
       self.skipWaiting();
     })(),
   );
@@ -27,9 +32,7 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const names = await caches.keys();
       await Promise.all(
-        names
-          .filter((n) => n.startsWith("dpt-") && !OWN_CACHES.includes(n))
-          .map((n) => caches.delete(n)),
+        names.filter((n) => n.startsWith("dpt-") && !OWN_CACHES.includes(n)).map((n) => caches.delete(n)),
       );
       await self.clients.claim();
     })(),
@@ -41,38 +44,34 @@ self.addEventListener("message", (event) => {
 });
 
 function isHashedAsset(url) {
-  // Vite hashed assets typically live under /_build/ or /assets/ and include a content hash.
   return /\/_build\//.test(url.pathname) || /\/assets\/.*\.[a-f0-9]{8,}\./.test(url.pathname);
 }
-
 function isImageOrFont(req) {
-  const dest = req.destination;
-  return dest === "image" || dest === "font";
+  const d = req.destination;
+  return d === "image" || d === "font";
 }
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
-
   const url = new URL(req.url);
-
-  // Never cache: cross-origin (Supabase, fonts.googleapis, gateway), auth, APIs.
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_serverFn")) return;
 
-  // HTML navigations → NetworkFirst, fall back to cached shell.
   if (req.mode === "navigate") {
     event.respondWith(
       (async () => {
         try {
           const fresh = await fetch(req);
           const cache = await caches.open(HTML_CACHE);
-          cache.put(OFFLINE_URL, fresh.clone()).catch(() => {});
+          cache.put(req, fresh.clone()).catch(() => {});
           return fresh;
         } catch (_) {
           const cache = await caches.open(HTML_CACHE);
-          const cached = (await cache.match(req)) || (await cache.match(OFFLINE_URL));
+          const cached = (await cache.match(req)) || (await cache.match(url.pathname));
           if (cached) return cached;
+          const offline = await cache.match(OFFLINE_URL);
+          if (offline) return offline;
           return new Response("Offline", { status: 503, headers: { "content-type": "text/plain" } });
         }
       })(),
@@ -80,7 +79,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Hashed assets / images / fonts → CacheFirst.
   if (isHashedAsset(url) || isImageOrFont(req)) {
     event.respondWith(
       (async () => {
@@ -94,6 +92,19 @@ self.addEventListener("fetch", (event) => {
         } catch (_) {
           return cached || Response.error();
         }
+      })(),
+    );
+  }
+});
+
+// Background-sync style: when the page tells us connectivity is back,
+// re-broadcast so any open clients can flush their queued inquiries.
+self.addEventListener("sync", (event) => {
+  if (event.tag === "flush-inquiries") {
+    event.waitUntil(
+      (async () => {
+        const clients = await self.clients.matchAll({ includeUncontrolled: true });
+        clients.forEach((c) => c.postMessage({ type: "flush-inquiries" }));
       })(),
     );
   }
