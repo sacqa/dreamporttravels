@@ -98,7 +98,18 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  useEffect(() => { registerServiceWorker(); }, []);
+  useEffect(() => {
+    registerServiceWorker();
+    let stop: (() => void) | undefined;
+    import("@/lib/offline-queue").then((m) => {
+      stop = m.startInquiryFlusher((sent) => {
+        import("sonner").then(({ toast }) =>
+          toast.success(`${sent} queued message${sent === 1 ? "" : "s"} sent — you're back online.`),
+        );
+      });
+    });
+    return () => { stop?.(); };
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
