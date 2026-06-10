@@ -1,0 +1,13 @@
+{
+  "name": "DreamPort Travels",
+  "short_name": "DreamPort",
+  "description": "Visa & Umrah services in Pakistan",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f3460",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}
