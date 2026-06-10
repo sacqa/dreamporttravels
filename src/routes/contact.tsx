@@ -6,6 +6,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { queueInquiry } from "@/lib/offline-queue";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -28,9 +29,23 @@ function ContactPage() {
     const parsed = schema.safeParse(form);
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Invalid");
     setLoading(true);
+    // Offline? queue locally and confirm — the flusher will send when back online.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      queueInquiry(parsed.data);
+      setLoading(false);
+      toast.success("You're offline — message saved. We'll send it automatically when you reconnect.");
+      setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+      return;
+    }
     const { error } = await supabase.from("inquiries").insert(parsed.data);
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      // Network/transient error — queue and tell the user.
+      queueInquiry(parsed.data);
+      toast.success("Saved — we'll send your message as soon as the connection is back.");
+      setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+      return;
+    }
     toast.success("Message sent! We'll get back within 24 hours.");
     setForm({ name: "", email: "", phone: "", subject: "", message: "" });
   }
