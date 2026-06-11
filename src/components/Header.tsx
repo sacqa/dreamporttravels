@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Logo } from "./Logo";
-import { useCartItems } from "@/lib/cart";
+import { cart, useCartItems } from "@/lib/cart";
 import { ShoppingBag, Menu, X, Phone, Shield, LogOut, LogIn, User } from "lucide-react";
 import { useState } from "react";
 import { SITE } from "@/lib/site";
@@ -59,10 +59,11 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Link
-            to="/cart"
+          <button
+            type="button"
+            onClick={() => cart.openDrawer()}
             className="relative inline-flex items-center justify-center h-10 w-10 rounded-full hover:bg-muted transition-colors"
-            aria-label="Cart"
+            aria-label="Open cart"
           >
             <ShoppingBag className="h-5 w-5" />
             {count > 0 && (
@@ -70,7 +71,7 @@ export function Header() {
                 {count}
               </span>
             )}
-          </Link>
+          </button>
           {isAdmin && (
             <Link
               to="/admin"
