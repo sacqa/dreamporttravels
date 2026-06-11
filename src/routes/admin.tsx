@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/AppShell";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { formatPKR } from "@/lib/site";
+import { formatPKR, SITE } from "@/lib/site";
 import { generateServiceImage } from "@/lib/admin.functions";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Plus, Trash2, Eye, EyeOff } from "lucide-react";
+import {
+  Sparkles, Loader2, Plus, Trash2, Eye, EyeOff,
+  LayoutDashboard, ShoppingCart, Plane, Building2, FileText, Users, MessageSquare,
+  CreditCard, ExternalLink, LogOut, Menu, X, Globe, DollarSign, TrendingUp, Bell,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — DreamPort Travels" }] }),
@@ -27,8 +30,21 @@ type Row = {
 
 const ORDER_STATUSES = ["pending", "paid", "processing", "completed", "cancelled"] as const;
 
+type Tab = "dashboard" | "orders" | "visas" | "umrah" | "content" | "customers" | "inquiries" | "payments";
+
+const NAV: { key: Tab; label: string; icon: any }[] = [
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { key: "orders", label: "Orders", icon: ShoppingCart },
+  { key: "visas", label: "Visa Services", icon: Plane },
+  { key: "umrah", label: "Umrah Packages", icon: Building2 },
+  { key: "content", label: "Site Content", icon: FileText },
+  { key: "customers", label: "Customers", icon: Users },
+  { key: "inquiries", label: "Inquiries", icon: MessageSquare },
+  { key: "payments", label: "Payments", icon: CreditCard },
+];
+
 function AdminPage() {
-  const [tab, setTab] = useState<"orders" | "visas" | "umrah" | "inquiries" | "payments" | "content" | "customers">("orders");
+  const [tab, setTab] = useState<Tab>("dashboard");
   const [orders, setOrders] = useState<any[]>([]);
   const [visas, setVisas] = useState<Row[]>([]);
   const [umrah, setUmrah] = useState<Row[]>([]);
@@ -37,6 +53,7 @@ function AdminPage() {
   const [content, setContent] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const refresh = async () => {
     const [o, v, u, iq, pc, sc, cu] = await Promise.all([
@@ -67,33 +84,102 @@ function AdminPage() {
     });
   }, []);
 
-  if (authed === null) return <AppShell><PageHeader title="Loading..." /></AppShell>;
-  if (!authed) return (
-    <AppShell>
-      <PageHeader title="Admin access required" subtitle="Sign in with an admin account." />
-      <div className="max-w-md mx-auto px-6 text-center pb-12">
-        <Link to="/auth" className="bg-primary text-primary-foreground px-6 py-3 rounded-full font-semibold">Sign In</Link>
+  if (authed === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    </AppShell>
-  );
+    );
+  }
+  if (!authed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30 px-6">
+        <div className="bg-card rounded-2xl ring-1 ring-border p-8 max-w-md text-center">
+          <div className="size-14 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center mb-4">
+            <LogOut className="h-7 w-7" />
+          </div>
+          <h1 className="text-xl font-bold mb-2">Admin access required</h1>
+          <p className="text-sm text-muted-foreground mb-5">Sign in with an admin account to access the dashboard.</p>
+          <Link to="/auth" className="inline-flex bg-primary text-primary-foreground px-6 py-3 rounded-full font-semibold">Sign In</Link>
+        </div>
+      </div>
+    );
+  }
 
-  const counts: Record<typeof tab, number> = {
-    orders: orders.length, visas: visas.length, umrah: umrah.length, inquiries: inquiries.length, payments: payments.length, content: content.length, customers: customers.length,
+  const counts: Record<Tab, number> = {
+    dashboard: 0, orders: orders.length, visas: visas.length, umrah: umrah.length,
+    inquiries: inquiries.length, payments: payments.length, content: content.length, customers: customers.length,
   };
 
-  return (
-    <AppShell>
-      <PageHeader title="Admin Dashboard" subtitle="Full control over orders, services, content, customers and payments" />
-      <section className="py-6">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="inline-flex flex-wrap gap-1 bg-muted rounded-full p-1 mb-6">
-            {(["orders","visas","umrah","content","customers","inquiries","payments"] as const).map((t) => (
-              <button key={t} onClick={() => setTab(t)} className={`px-5 py-2 rounded-full text-sm font-semibold capitalize transition ${tab===t?"bg-card shadow":"text-muted-foreground"}`}>
-                {t} ({counts[t]})
-              </button>
-            ))}
-          </div>
+  const sectionTitle = NAV.find((n) => n.key === tab)?.label ?? "Dashboard";
 
+  return (
+    <div className="min-h-screen flex bg-muted/30">
+      {/* Sidebar */}
+      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-card border-r border-border flex flex-col transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
+        <div className="h-16 px-5 flex items-center justify-between border-b border-border bg-primary text-primary-foreground">
+          <div>
+            <div className="font-display font-bold text-lg leading-tight">{SITE.shortName}</div>
+            <div className="text-[10px] uppercase tracking-widest opacity-70">Admin Panel</div>
+          </div>
+          <button className="lg:hidden" onClick={() => setSidebarOpen(false)}><X className="h-5 w-5" /></button>
+        </div>
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+          {NAV.map((n) => {
+            const Icon = n.icon;
+            const active = tab === n.key;
+            return (
+              <button
+                key={n.key}
+                onClick={() => { setTab(n.key); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${active ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground/70 hover:bg-muted hover:text-foreground"}`}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{n.label}</span>
+                {n.key !== "dashboard" && counts[n.key] > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${active ? "bg-primary-foreground/20" : "bg-muted-foreground/15"}`}>{counts[n.key]}</span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+        <div className="p-3 border-t border-border space-y-1">
+          <Link to="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
+            <ExternalLink className="h-4 w-4" /> View Site
+          </Link>
+          <button onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+            <LogOut className="h-4 w-4" /> Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/50 z-30 lg:hidden" />}
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-16 bg-card border-b border-border px-5 flex items-center justify-between sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <button className="lg:hidden" onClick={() => setSidebarOpen(true)}><Menu className="h-5 w-5" /></button>
+            <div>
+              <h1 className="text-lg font-bold leading-tight">{sectionTitle}</h1>
+              <p className="text-xs text-muted-foreground">Manage your travel business</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <a href={`https://${SITE.domain}`} target="_blank" rel="noreferrer" className="hidden sm:inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-muted hover:bg-muted/70">
+              <Globe className="h-3.5 w-3.5" /> {SITE.domain}
+            </a>
+            {inquiries.length > 0 && (
+              <button onClick={() => setTab("inquiries")} className="relative inline-flex items-center justify-center h-9 w-9 rounded-full hover:bg-muted">
+                <Bell className="h-4 w-4" />
+                <span className="absolute -top-0.5 -right-0.5 bg-accent text-accent-foreground text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">{inquiries.length}</span>
+              </button>
+            )}
+          </div>
+        </header>
+
+        <main className="flex-1 p-5 lg:p-8 overflow-x-auto">
+          {tab === "dashboard" && <DashboardOverview orders={orders} visas={visas} umrah={umrah} customers={customers} inquiries={inquiries} onJump={setTab} />}
           {tab === "orders" && <OrdersTable orders={orders} onChange={refresh} />}
           {tab === "visas" && <ServicesTable rows={visas} table="visa_services" onChange={refresh} />}
           {tab === "umrah" && <ServicesTable rows={umrah} table="umrah_packages" onChange={refresh} />}
@@ -101,11 +187,108 @@ function AdminPage() {
           {tab === "customers" && <CustomersTable rows={customers} />}
           {tab === "inquiries" && <InquiriesTable rows={inquiries} />}
           {tab === "payments" && <PaymentsTable rows={payments} onChange={refresh} />}
-        </div>
-      </section>
-    </AppShell>
+        </main>
+      </div>
+    </div>
   );
 }
+
+function DashboardOverview({ orders, visas, umrah, customers, inquiries, onJump }: { orders: any[]; visas: Row[]; umrah: Row[]; customers: any[]; inquiries: any[]; onJump: (t: Tab) => void }) {
+  const revenue = orders.filter((o) => ["paid", "processing", "completed"].includes(o.status)).reduce((s, o) => s + (o.total_pkr ?? 0), 0);
+  const pending = orders.filter((o) => o.status === "pending").length;
+  const recent = orders.slice(0, 5);
+  const stats = [
+    { label: "Revenue", value: formatPKR(revenue), icon: DollarSign, tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+    { label: "Orders", value: orders.length, sub: `${pending} pending`, icon: ShoppingCart, tone: "bg-blue-500/10 text-blue-600 dark:text-blue-400", click: () => onJump("orders") },
+    { label: "Customers", value: customers.length, icon: Users, tone: "bg-purple-500/10 text-purple-600 dark:text-purple-400", click: () => onJump("customers") },
+    { label: "Inquiries", value: inquiries.length, icon: MessageSquare, tone: "bg-orange-500/10 text-orange-600 dark:text-orange-400", click: () => onJump("inquiries") },
+    { label: "Visa Services", value: visas.length, sub: `${visas.filter((v) => v.active).length} active`, icon: Plane, tone: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400", click: () => onJump("visas") },
+    { label: "Umrah Packages", value: umrah.length, sub: `${umrah.filter((u) => u.active).length} active`, icon: Building2, tone: "bg-rose-500/10 text-rose-600 dark:text-rose-400", click: () => onJump("umrah") },
+  ];
+
+  return (
+    <div className="space-y-6 max-w-7xl">
+      <div className="bg-gradient-to-r from-primary to-primary/70 text-primary-foreground rounded-2xl p-6 flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-display font-bold">Welcome back 👋</h2>
+          <p className="text-primary-foreground/80 text-sm mt-1">Here's what's happening with your travel business today.</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => onJump("content")} className="bg-white/15 hover:bg-white/25 px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5"><FileText className="h-4 w-4" /> Edit Homepage</button>
+          <button onClick={() => onJump("visas")} className="bg-accent text-accent-foreground hover:opacity-90 px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5"><Plus className="h-4 w-4" /> Add Service</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {stats.map((s) => {
+          const Icon = s.icon;
+          return (
+            <button
+              key={s.label}
+              onClick={s.click}
+              className="bg-card rounded-xl ring-1 ring-border p-4 text-left hover:ring-primary/40 hover:shadow-md transition group disabled:cursor-default"
+              disabled={!s.click}
+            >
+              <div className={`size-9 rounded-lg flex items-center justify-center mb-3 ${s.tone}`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <div className="text-xs text-muted-foreground font-medium">{s.label}</div>
+              <div className="text-xl font-bold mt-0.5 truncate">{s.value}</div>
+              {s.sub && <div className="text-[11px] text-muted-foreground mt-0.5">{s.sub}</div>}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-5">
+        <div className="bg-card rounded-xl ring-1 ring-border p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Recent Orders</h3>
+            <button onClick={() => onJump("orders")} className="text-xs text-primary hover:underline">View all →</button>
+          </div>
+          {recent.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No orders yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {recent.map((o) => (
+                <div key={o.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg hover:bg-muted/50">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-sm truncate">{o.customer_name}</div>
+                    <div className="text-xs text-muted-foreground font-mono">{o.order_number}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-sm">{formatPKR(o.total_pkr)}</div>
+                    <div className={`text-[10px] uppercase font-semibold ${o.status === "paid" || o.status === "completed" ? "text-emerald-600" : o.status === "pending" ? "text-orange-600" : "text-muted-foreground"}`}>{o.status}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-card rounded-xl ring-1 ring-border p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Latest Inquiries</h3>
+            <button onClick={() => onJump("inquiries")} className="text-xs text-primary hover:underline">View all →</button>
+          </div>
+          {inquiries.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No inquiries yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {inquiries.slice(0, 5).map((i) => (
+                <div key={i.id} className="p-2.5 rounded-lg hover:bg-muted/50">
+                  <div className="font-semibold text-sm">{i.name} <span className="text-xs text-muted-foreground font-normal">· {i.email}</span></div>
+                  <div className="text-xs text-muted-foreground truncate">{i.subject || i.message}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function CustomersTable({ rows }: { rows: any[] }) {
   if (rows.length === 0) return <p className="text-center text-muted-foreground py-12">No customers yet.</p>;
