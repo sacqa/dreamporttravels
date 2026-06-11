@@ -13,6 +13,14 @@ export type CartItem = {
 const KEY = "dreamport_cart_v1";
 const listeners = new Set<() => void>();
 
+// Drawer open state (separate store)
+const drawerListeners = new Set<() => void>();
+let drawerOpen = false;
+function setDrawerOpen(v: boolean) {
+  drawerOpen = v;
+  drawerListeners.forEach((l) => l());
+}
+
 function read(): CartItem[] {
   if (typeof window === "undefined") return [];
   try {
@@ -44,6 +52,7 @@ export const cart = {
       });
     }
     write(items);
+    setDrawerOpen(true);
   },
   remove(id: string) {
     write(read().filter((i) => i.id !== id));
@@ -63,6 +72,8 @@ export const cart = {
     listeners.add(cb);
     return () => listeners.delete(cb);
   },
+  openDrawer() { setDrawerOpen(true); },
+  closeDrawer() { setDrawerOpen(false); },
 };
 
 export function useCart() {
@@ -76,6 +87,15 @@ export function useCart() {
 export function useCartItems(): CartItem[] {
   useCart();
   return read();
+}
+
+export function useCartDrawer(): [boolean, (v: boolean) => void] {
+  const open = useSyncExternalStore(
+    (cb) => { drawerListeners.add(cb); return () => drawerListeners.delete(cb); },
+    () => drawerOpen,
+    () => false,
+  );
+  return [open, setDrawerOpen];
 }
 
 export function cartTotal(items: CartItem[]) {
