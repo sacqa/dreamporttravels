@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { cart, cartTotal, useCartDrawer, useCartItems } from "@/lib/cart";
 import { formatPKR } from "@/lib/site";
 import { Link } from "@tanstack/react-router";
-import { Minus, Plus, ShoppingBag, Trash2, ArrowRight, Sparkles } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, ArrowRight, Sparkles, Clock, MapPin } from "lucide-react";
 
 export function CartDrawer() {
   const [open, setOpen] = useCartDrawer();
@@ -51,12 +51,21 @@ export function CartDrawer() {
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
               {items.map((it) => (
                 <div key={it.id} className="bg-card rounded-xl p-3 ring-1 ring-border flex gap-3 animate-in slide-in-from-right-2 duration-300">
-                  <div className="size-12 rounded-lg bg-accent/10 flex items-center justify-center text-xl shrink-0">
-                    {it.type === "umrah" ? "🕋" : "✈️"}
+                  <div className="size-14 rounded-lg bg-gradient-to-br from-accent/15 to-primary/10 flex items-center justify-center text-2xl shrink-0">
+                    {it.flag ?? (it.type === "umrah" ? "🕋" : "✈️")}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm truncate">{it.name}</h4>
-                    <p className="text-xs text-muted-foreground truncate">{it.details}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="font-semibold text-sm truncate">{it.name}</h4>
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0">{it.type}</span>
+                    </div>
+                    {it.country && (
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5"><MapPin className="h-3 w-3" /> {it.country}</p>
+                    )}
+                    {it.details && <p className="text-xs text-muted-foreground truncate">{it.details}</p>}
+                    {it.processing_time && (
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5"><Clock className="h-3 w-3" /> {it.processing_time}</p>
+                    )}
                     <p className="text-accent font-bold text-sm mt-1">{formatPKR(it.unitPrice)}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <button onClick={() => cart.setQuantity(it.id, it.quantity - 1)} className="size-7 rounded-full border border-border hover:bg-muted flex items-center justify-center"><Minus className="h-3 w-3" /></button>

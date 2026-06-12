@@ -14,7 +14,7 @@ const legal = [
   { to: "/faqs", label: "FAQs" },
 ];
 
-type FooterContent = {
+export type FooterContent = {
   tagline: string;
   description: string;
   badge_text: string;
@@ -24,16 +24,19 @@ type FooterContent = {
   copyright_note: string;
 };
 
-export function Footer() {
-  const f = useContentValue<FooterContent>("footer.content", {
-    tagline: "Your trusted partner for visa and Umrah services across Pakistan.",
-    description: `${SITE.legalName} — a registered Pakistani travel management company specializing in global visa processing and religious tourism.`,
-    badge_text: "SECP Registered Entity",
-    services_heading: "Services",
-    legal_heading: "Legal",
-    contact_heading: "Contact",
-    copyright_note: "All rights reserved.",
-  });
+const FOOTER_DEFAULTS: FooterContent = {
+  tagline: "Your trusted partner for visa and Umrah services across Pakistan.",
+  description: `${SITE.legalName} — a registered Pakistani travel management company specializing in global visa processing and religious tourism.`,
+  badge_text: "SECP Registered Entity",
+  services_heading: "Services",
+  legal_heading: "Legal",
+  contact_heading: "Contact",
+  copyright_note: "All rights reserved.",
+};
+
+export function Footer({ override }: { override?: Partial<FooterContent> }) {
+  const stored = useContentValue<FooterContent>("footer.content", FOOTER_DEFAULTS);
+  const f: FooterContent = { ...FOOTER_DEFAULTS, ...stored, ...(override ?? {}) };
 
   return (
     <footer className="bg-primary text-primary-foreground mt-24">
@@ -90,3 +93,5 @@ export function Footer() {
     </footer>
   );
 }
+
+export { FOOTER_DEFAULTS };
