@@ -25,8 +25,18 @@ function VisaDetail() {
   const { data: v } = useSuspenseQuery(visaBySlugQuery(slug));
 
   const add = (checkout = false) => {
-    cart.add({ type: "visa", itemId: v.id, name: `${v.country} — ${v.visa_type}`, details: v.duration ?? "", unitPrice: v.price_pkr });
-    toast.success("Added to cart");
+    cart.add({
+      type: "visa",
+      itemId: v.id,
+      name: `${v.country} — ${v.visa_type}`,
+      details: v.duration ?? "",
+      unitPrice: v.price_pkr,
+      country: v.country,
+      flag: v.flag_emoji ?? undefined,
+      processing_time: v.processing_time ?? undefined,
+      duration: v.duration ?? undefined,
+    });
+    toast.success(`${v.country} ${v.visa_type} added`, { description: `${v.processing_time ?? ""}` });
     if (checkout) navigate({ to: "/checkout" });
   };
 

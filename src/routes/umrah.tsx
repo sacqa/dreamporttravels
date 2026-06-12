@@ -46,7 +46,19 @@ function UmrahPage() {
                   ))}
                 </ul>
                 <button
-                  onClick={() => { cart.add({ type: "umrah", itemId: p.id, name: p.name, details: `${p.duration_days} days`, unitPrice: p.price_pkr }); toast.success("Added to cart"); }}
+                  onClick={() => {
+                    cart.add({
+                      type: "umrah",
+                      itemId: p.id,
+                      name: p.name,
+                      details: `${p.tier ?? ""} · ${p.duration_days} days`.trim(),
+                      unitPrice: p.price_pkr,
+                      flag: "🕋",
+                      duration: `${p.duration_days} days`,
+                      country: "Saudi Arabia",
+                    });
+                    toast.success(`${p.name} added`, { description: `${p.duration_days} days · ${p.makkah_hotel ?? ""}` });
+                  }}
                   className={`mt-7 w-full py-3 rounded-lg font-semibold transition-colors ${popular ? "bg-primary-foreground text-primary hover:bg-white" : "bg-primary text-primary-foreground hover:bg-primary-light"}`}
                 >
                   Book This Package
