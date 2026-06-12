@@ -47,7 +47,17 @@ function VisasPage() {
                   <button
                     onClick={(e) => {
                       e.preventDefault();
-                      cart.add({ type: "visa", itemId: v.id, name: `${v.country} — ${v.visa_type}`, details: v.duration ?? "", unitPrice: v.price_pkr });
+                      cart.add({
+                        type: "visa",
+                        itemId: v.id,
+                        name: `${v.country} — ${v.visa_type}`,
+                        details: v.duration ?? "",
+                        unitPrice: v.price_pkr,
+                        country: v.country,
+                        flag: v.flag_emoji ?? undefined,
+                        processing_time: v.processing_time ?? undefined,
+                        duration: v.duration ?? undefined,
+                      });
                       toast.success(`${v.country} added to cart`);
                     }}
                     className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-primary-light"
