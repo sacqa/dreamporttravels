@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      cart_sessions: {
+        Row: {
+          anon_id: string
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          item_count: number
+          items: Json
+          last_activity_at: string
+          order_id: string | null
+          status: string
+          total_pkr: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          anon_id: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          item_count?: number
+          items?: Json
+          last_activity_at?: string
+          order_id?: string | null
+          status?: string
+          total_pkr?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          anon_id?: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          item_count?: number
+          items?: Json
+          last_activity_at?: string
+          order_id?: string | null
+          status?: string
+          total_pkr?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_sessions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_addresses: {
         Row: {
           city: string
