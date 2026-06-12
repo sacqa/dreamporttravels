@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { cart, cartTotal, useCartItems } from "@/lib/cart";
 import { formatPKR } from "@/lib/site";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,6 +31,12 @@ function CheckoutPage() {
   const initJazz = useServerFn(initiateJazzCashPayment);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<{ name: string; email: string; phone: string; cnic: string; address: string; notes: string; payment_method: "jazzcash" | "easypaisa" | "bank_transfer" }>({ name: "", email: "", phone: "", cnic: "", address: "", notes: "", payment_method: "jazzcash" });
+
+  // Mark checkout_started once when this page is reached with items
+  useEffect(() => {
+    if (items.length > 0) cart.markCheckoutStarted().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,6 +76,12 @@ function CheckoutPage() {
         })),
       );
       if (itemsError) throw itemsError;
+      // Track cart conversion before clearing
+      cart.markConverted(order.id, {
+        customer_name: parsed.data.name,
+        customer_email: parsed.data.email,
+        customer_phone: parsed.data.phone,
+      }).catch(() => {});
       cart.clear();
 
       // If JazzCash is wired up, redirect to JazzCash form-post.
