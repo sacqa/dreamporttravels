@@ -8,6 +8,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { initiateJazzCashPayment } from "@/lib/payment.functions";
+import { placeOrder } from "@/lib/orders.functions";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -29,6 +30,7 @@ function CheckoutPage() {
   const total = cartTotal(items);
   const navigate = useNavigate();
   const initJazz = useServerFn(initiateJazzCashPayment);
+  const submitOrder = useServerFn(placeOrder);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<{ name: string; email: string; phone: string; cnic: string; address: string; notes: string; payment_method: "jazzcash" | "easypaisa" | "bank_transfer" }>({ name: "", email: "", phone: "", cnic: "", address: "", notes: "", payment_method: "jazzcash" });
 
@@ -46,36 +48,26 @@ function CheckoutPage() {
     setLoading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
-      const { data: order, error } = await supabase
-        .from("orders")
-        .insert({
+      const order = await submitOrder({
+        data: {
           user_id: userData.user?.id ?? null,
           customer_name: parsed.data.name,
           customer_email: parsed.data.email,
           customer_phone: parsed.data.phone,
-          customer_cnic: parsed.data.cnic,
-          customer_address: parsed.data.address,
-          notes: parsed.data.notes,
+          customer_cnic: parsed.data.cnic ?? null,
+          customer_address: parsed.data.address ?? null,
+          notes: parsed.data.notes ?? null,
           payment_method: parsed.data.payment_method,
-          subtotal_pkr: total,
-          total_pkr: total,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      const { error: itemsError } = await supabase.from("order_items").insert(
-        items.map((i) => ({
-          order_id: order.id,
-          item_type: i.type,
-          item_id: i.itemId,
-          item_name: i.name,
-          item_details: i.details,
-          quantity: i.quantity,
-          unit_price_pkr: i.unitPrice,
-          total_price_pkr: i.unitPrice * i.quantity,
-        })),
-      );
-      if (itemsError) throw itemsError;
+          items: items.map((i) => ({
+            type: i.type as "visa" | "umrah",
+            itemId: i.itemId,
+            name: i.name,
+            details: i.details ?? null,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+          })),
+        },
+      });
       // Track cart conversion before clearing
       cart.markConverted(order.id, {
         customer_name: parsed.data.name,
@@ -84,7 +76,6 @@ function CheckoutPage() {
       }).catch(() => {});
       cart.clear();
 
-      // If JazzCash is wired up, redirect to JazzCash form-post.
       if (parsed.data.payment_method === "jazzcash") {
         try {
           const res = await initJazz({ data: { order_id: order.id } });
@@ -93,7 +84,6 @@ function CheckoutPage() {
             return;
           }
         } catch (e) {
-          // fall through to manual flow
           console.warn("JazzCash init failed, falling back to manual", e);
         }
       }
