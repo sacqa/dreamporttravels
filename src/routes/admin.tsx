@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   Sparkles, Loader2, Plus, Trash2, Eye, EyeOff, ShieldCheck, ShieldAlert,
   LayoutDashboard, ShoppingCart, Plane, Building2, FileText, Users, MessageSquare,
-  CreditCard, ExternalLink, LogOut, Menu, X, Globe, DollarSign, TrendingUp, Bell, Lock,
+  CreditCard, ExternalLink, LogOut, Menu, X, Globe, DollarSign, TrendingUp, Bell, Lock, Pencil, Save, ImageIcon,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
