@@ -8,6 +8,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { initiateJazzCashPayment } from "@/lib/payment.functions";
+import { placeOrder } from "@/lib/orders.functions";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(100),
