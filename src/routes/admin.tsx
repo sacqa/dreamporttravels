@@ -672,26 +672,22 @@ function OrdersTable({ orders, onChange }: { orders: any[]; onChange: () => void
 
 function ServicesTable({ rows, table, onChange, canGenerate, aiKeyConfigured }: { rows: Row[]; table: "visa_services" | "umrah_packages"; onChange: () => void; canGenerate: boolean; aiKeyConfigured: boolean | null }) {
   const gen = useServerFn(generateServiceImage);
+  const seed = useServerFn(seedDefaultImages);
   const [busy, setBusy] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   async function generate(r: Row) {
-    if (!canGenerate) {
-      toast.error("Only admins can generate images.");
-      return;
-    }
-    if (aiKeyConfigured === false) {
-      toast.error("AI key not configured on server. Cannot generate.");
-      return;
-    }
+    if (!canGenerate) return toast.error("Only admins can generate images.");
+    if (aiKeyConfigured === false) return toast.error("AI key not configured on server.");
     const label = r.country ?? r.name ?? "service";
     const defaultPrompt = table === "visa_services"
       ? `A stunning travel photograph of ${r.country}, iconic landmark, golden hour cinematic lighting, ultra realistic, 4k, vibrant colors, no text`
       : `Beautiful photograph of ${r.name} — Masjid al-Haram or Madinah, devotional Umrah journey, soft golden light, ultra realistic, no text`;
     const prompt = window.prompt(`AI prompt for "${label}":`, defaultPrompt);
     if (!prompt) return;
-    setBusy(r.id);
-    setLastError(null);
+    setBusy(r.id); setLastError(null);
     try {
       await gen({ data: { table, id: r.id, prompt } });
       toast.success(`✨ Image generated for ${label}`);
@@ -700,26 +696,24 @@ function ServicesTable({ rows, table, onChange, canGenerate, aiKeyConfigured }: 
       const msg = e?.message ?? "Generation failed";
       setLastError(`${label}: ${msg}`);
       toast.error(msg);
-    } finally {
-      setBusy(null);
-    }
+    } finally { setBusy(null); }
+  }
+
+  async function seedAll() {
+    setSeeding(true);
+    try {
+      const r = await seed({});
+      toast.success(`Seeded ${r.updated} default image${r.updated === 1 ? "" : "s"}`);
+      await onChange();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Seeding failed");
+    } finally { setSeeding(false); }
   }
 
   async function toggleActive(r: Row) {
     const { error } = await (supabase.from(table) as any).update({ active: !r.active }).eq("id", r.id);
     if (error) return toast.error(error.message);
     toast.success(!r.active ? "Activated" : "Hidden from site");
-    onChange();
-  }
-
-  async function editPrice(r: Row) {
-    const v = window.prompt("New price (PKR):", String(r.price_pkr));
-    if (!v) return;
-    const n = Number(v.replace(/[^\d]/g, ""));
-    if (!Number.isFinite(n) || n <= 0) return toast.error("Invalid price");
-    const { error } = await (supabase.from(table) as any).update({ price_pkr: n }).eq("id", r.id);
-    if (error) return toast.error(error.message);
-    toast.success("Price updated");
     onChange();
   }
 
@@ -733,7 +727,6 @@ function ServicesTable({ rows, table, onChange, canGenerate, aiKeyConfigured }: 
 
   return (
     <div>
-      {/* Image-gen status banner */}
       <div className={`mb-4 rounded-xl ring-1 px-4 py-3 text-sm flex items-start gap-3 ${
         !canGenerate ? "bg-amber-500/10 ring-amber-500/20 text-amber-800 dark:text-amber-200" :
         aiKeyConfigured === false ? "bg-rose-500/10 ring-rose-500/20 text-rose-800 dark:text-rose-200" :
@@ -748,15 +741,20 @@ function ServicesTable({ rows, table, onChange, canGenerate, aiKeyConfigured }: 
               : "Image generation ready"}
           </div>
           <div className="text-xs opacity-90 mt-0.5">
-            {!canGenerate ? "Only the admin role can generate images. Editors can manage content but not media."
-              : aiKeyConfigured === false ? "LOVABLE_API_KEY env var is missing on the server. Contact the project owner."
+            {!canGenerate ? "Only the admin role can generate images."
+              : aiKeyConfigured === false ? "LOVABLE_API_KEY env var is missing on the server."
               : aiKeyConfigured === null ? "Verifying server config…"
-              : `Connected to AI gateway · Uploading into "service-images" bucket.`}
+              : `Connected to AI gateway · Uploads use signed URLs from "service-images".`}
           </div>
           {lastError && (
             <div className="mt-2 text-xs font-mono bg-background/60 px-2 py-1 rounded">Last error → {lastError}</div>
           )}
         </div>
+        {canGenerate && (
+          <button onClick={seedAll} disabled={seeding} className="ml-2 inline-flex items-center gap-1.5 bg-background/70 ring-1 ring-border px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-background disabled:opacity-60">
+            {seeding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />} Seed defaults
+          </button>
+        )}
       </div>
 
       <div className="flex justify-end mb-4">
@@ -775,20 +773,23 @@ function ServicesTable({ rows, table, onChange, canGenerate, aiKeyConfigured }: 
             <div className="p-4 space-y-2">
               <h3 className="font-semibold">{r.country ?? r.name}</h3>
               <p className="text-xs text-muted-foreground">{r.visa_type ?? r.tier}</p>
-              <button onClick={() => editPrice(r)} className="text-accent font-bold text-sm hover:underline">{formatPKR(r.price_pkr)} ✎</button>
+              <div className="text-accent font-bold text-sm">{formatPKR(r.price_pkr)}</div>
               <button
                 disabled={busy === r.id || !canGenerate || aiKeyConfigured === false}
                 onClick={() => generate(r)}
                 title={!canGenerate ? "Admin role required" : aiKeyConfigured === false ? "AI key missing" : "Generate AI image"}
-                className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground py-2 rounded-lg text-sm font-semibold hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground py-2 rounded-lg text-sm font-semibold hover:bg-primary-light disabled:opacity-50"
               >
                 {busy === r.id
                   ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
                   : <><Sparkles className="h-4 w-4" /> {r.image_url ? "Regenerate" : "Generate Image"}</>}
               </button>
               <div className="flex gap-2">
-                <button onClick={() => toggleActive(r)} className="flex-1 inline-flex items-center justify-center gap-1 border border-border rounded-lg py-1.5 text-xs hover:bg-muted">
-                  {r.active ? <><Eye className="h-3.5 w-3.5" /> Active</> : <><EyeOff className="h-3.5 w-3.5" /> Hidden</>}
+                <button onClick={() => setEditing(r)} className="flex-1 inline-flex items-center justify-center gap-1 border border-border rounded-lg py-1.5 text-xs hover:bg-muted">
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </button>
+                <button onClick={() => toggleActive(r)} className="inline-flex items-center justify-center gap-1 border border-border rounded-lg py-1.5 px-3 text-xs hover:bg-muted">
+                  {r.active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                 </button>
                 <button onClick={() => remove(r)} className="inline-flex items-center justify-center border border-destructive/30 text-destructive rounded-lg py-1.5 px-3 text-xs hover:bg-destructive/10">
                   <Trash2 className="h-3.5 w-3.5" />
@@ -797,6 +798,128 @@ function ServicesTable({ rows, table, onChange, canGenerate, aiKeyConfigured }: 
             </div>
           </div>
         ))}
+      </div>
+
+      {editing && (
+        <ServiceEditor
+          table={table}
+          row={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); onChange(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ServiceEditor({ table, row, onClose, onSaved }: { table: "visa_services" | "umrah_packages"; row: any; onClose: () => void; onSaved: () => void }) {
+  const [f, setF] = useState<any>({ ...row, inclusions: (row.inclusions ?? []).join("\n"), requirements: (row.requirements ?? []).join("\n") });
+  const [saving, setSaving] = useState(false);
+
+  function set<K extends string>(k: K, v: any) { setF((p: any) => ({ ...p, [k]: v })); }
+
+  async function save() {
+    setSaving(true);
+    try {
+      const payload: any = {
+        slug: f.slug,
+        price_pkr: Number(f.price_pkr) || 0,
+        description: f.description ?? null,
+        image_url: f.image_url ?? null,
+        active: !!f.active,
+      };
+      if (table === "visa_services") {
+        Object.assign(payload, {
+          country: f.country,
+          country_code: f.country_code,
+          flag_emoji: f.flag_emoji ?? null,
+          visa_type: f.visa_type,
+          duration: f.duration ?? null,
+          processing_time: f.processing_time ?? null,
+          featured: !!f.featured,
+          requirements: f.requirements ? f.requirements.split("\n").map((s: string) => s.trim()).filter(Boolean) : null,
+        });
+      } else {
+        Object.assign(payload, {
+          name: f.name,
+          tier: f.tier,
+          duration_days: Number(f.duration_days) || 0,
+          makkah_hotel: f.makkah_hotel ?? null,
+          madinah_hotel: f.madinah_hotel ?? null,
+          distance_from_haram: f.distance_from_haram ?? null,
+          inclusions: f.inclusions ? f.inclusions.split("\n").map((s: string) => s.trim()).filter(Boolean) : null,
+          popular: !!f.popular,
+        });
+      }
+      const { error } = await (supabase.from(table) as any).update(payload).eq("id", row.id);
+      if (error) throw error;
+      toast.success("Saved");
+      onSaved();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Save failed");
+    } finally { setSaving(false); }
+  }
+
+  const F = ({ label, children }: { label: string; children: any }) => (
+    <label className="block">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">{label}</span>
+      {children}
+    </label>
+  );
+  const ip = "w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-accent/30";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-6 overflow-y-auto" onClick={onClose}>
+      <div className="bg-card rounded-2xl w-full max-w-2xl my-4 ring-1 ring-border" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h3 className="font-semibold">Edit {table === "visa_services" ? "Visa Service" : "Umrah Package"}</h3>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="p-5 grid sm:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
+          {table === "visa_services" ? (
+            <>
+              <F label="Country *"><input className={ip} value={f.country ?? ""} onChange={(e) => set("country", e.target.value)} /></F>
+              <F label="Country Code *"><input className={ip} value={f.country_code ?? ""} onChange={(e) => set("country_code", e.target.value.toUpperCase())} maxLength={3} /></F>
+              <F label="Flag emoji"><input className={ip} value={f.flag_emoji ?? ""} onChange={(e) => set("flag_emoji", e.target.value)} /></F>
+              <F label="Visa Type *"><input className={ip} value={f.visa_type ?? ""} onChange={(e) => set("visa_type", e.target.value)} /></F>
+              <F label="Duration"><input className={ip} value={f.duration ?? ""} onChange={(e) => set("duration", e.target.value)} placeholder="30 days" /></F>
+              <F label="Processing Time"><input className={ip} value={f.processing_time ?? ""} onChange={(e) => set("processing_time", e.target.value)} placeholder="7–10 days" /></F>
+              <F label="Featured"><select className={ip} value={String(f.featured)} onChange={(e) => set("featured", e.target.value === "true")}><option value="false">No</option><option value="true">Yes</option></select></F>
+            </>
+          ) : (
+            <>
+              <F label="Name *"><input className={ip} value={f.name ?? ""} onChange={(e) => set("name", e.target.value)} /></F>
+              <F label="Tier *"><input className={ip} value={f.tier ?? ""} onChange={(e) => set("tier", e.target.value)} placeholder="Economy / Executive / Luxury" /></F>
+              <F label="Duration (days) *"><input type="number" className={ip} value={f.duration_days ?? 0} onChange={(e) => set("duration_days", e.target.value)} /></F>
+              <F label="Distance from Haram"><input className={ip} value={f.distance_from_haram ?? ""} onChange={(e) => set("distance_from_haram", e.target.value)} placeholder="500m" /></F>
+              <F label="Makkah Hotel"><input className={ip} value={f.makkah_hotel ?? ""} onChange={(e) => set("makkah_hotel", e.target.value)} /></F>
+              <F label="Madinah Hotel"><input className={ip} value={f.madinah_hotel ?? ""} onChange={(e) => set("madinah_hotel", e.target.value)} /></F>
+              <F label="Popular"><select className={ip} value={String(f.popular)} onChange={(e) => set("popular", e.target.value === "true")}><option value="false">No</option><option value="true">Yes</option></select></F>
+            </>
+          )}
+          <F label="Slug *"><input className={ip} value={f.slug ?? ""} onChange={(e) => set("slug", e.target.value)} /></F>
+          <F label="Price (PKR) *"><input type="number" className={ip} value={f.price_pkr ?? 0} onChange={(e) => set("price_pkr", e.target.value)} /></F>
+          <F label="Active"><select className={ip} value={String(f.active)} onChange={(e) => set("active", e.target.value === "true")}><option value="true">Active</option><option value="false">Hidden</option></select></F>
+          <div className="sm:col-span-2">
+            <F label="Image URL"><input className={ip} value={f.image_url ?? ""} onChange={(e) => set("image_url", e.target.value)} placeholder="https://… or generate via Sparkles" /></F>
+          </div>
+          <div className="sm:col-span-2">
+            <F label="Description"><textarea rows={3} className={ip} value={f.description ?? ""} onChange={(e) => set("description", e.target.value)} /></F>
+          </div>
+          <div className="sm:col-span-2">
+            <F label={table === "visa_services" ? "Requirements (one per line)" : "Inclusions (one per line)"}>
+              <textarea rows={5} className={ip}
+                value={table === "visa_services" ? f.requirements : f.inclusions}
+                onChange={(e) => set(table === "visa_services" ? "requirements" : "inclusions", e.target.value)} />
+            </F>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold hover:bg-muted">Cancel</button>
+          <button onClick={save} disabled={saving} className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-light disabled:opacity-60">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes
+          </button>
+        </div>
       </div>
     </div>
   );
