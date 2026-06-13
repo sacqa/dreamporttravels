@@ -28,7 +28,7 @@ export const getAdminStatus = createServerFn({ method: "GET" })
     };
   });
 
-async function uploadImageBytes(table: string, id: string, bytes: Uint8Array) {
+async function uploadImageBytes(table: "visa_services" | "umrah_packages", id: string, bytes: Uint8Array) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const path = `${table}/${id}-${Date.now()}.png`;
   const { error: upErr } = await supabaseAdmin.storage
