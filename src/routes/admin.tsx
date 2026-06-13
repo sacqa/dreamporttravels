@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPKR, SITE } from "@/lib/site";
-import { generateServiceImage, getAdminStatus } from "@/lib/admin.functions";
+import { generateServiceImage, getAdminStatus, seedDefaultImages } from "@/lib/admin.functions";
 import { useRoles, type Permission } from "@/hooks/use-roles";
 import { Footer, FOOTER_DEFAULTS, type FooterContent } from "@/components/Footer";
 import { toast } from "sonner";
