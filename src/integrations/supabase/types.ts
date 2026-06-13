@@ -338,6 +338,7 @@ export type Database = {
           distance_from_haram: string | null
           duration_days: number
           id: string
+          image_url: string | null
           inclusions: string[] | null
           madinah_hotel: string | null
           makkah_hotel: string | null
@@ -354,6 +355,7 @@ export type Database = {
           distance_from_haram?: string | null
           duration_days: number
           id?: string
+          image_url?: string | null
           inclusions?: string[] | null
           madinah_hotel?: string | null
           makkah_hotel?: string | null
@@ -370,6 +372,7 @@ export type Database = {
           distance_from_haram?: string | null
           duration_days?: number
           id?: string
+          image_url?: string | null
           inclusions?: string[] | null
           madinah_hotel?: string | null
           makkah_hotel?: string | null
@@ -413,6 +416,7 @@ export type Database = {
           featured: boolean
           flag_emoji: string | null
           id: string
+          image_url: string | null
           price_pkr: number
           processing_time: string | null
           requirements: string[] | null
@@ -429,6 +433,7 @@ export type Database = {
           featured?: boolean
           flag_emoji?: string | null
           id?: string
+          image_url?: string | null
           price_pkr: number
           processing_time?: string | null
           requirements?: string[] | null
@@ -445,6 +450,7 @@ export type Database = {
           featured?: boolean
           flag_emoji?: string | null
           id?: string
+          image_url?: string | null
           price_pkr?: number
           processing_time?: string | null
           requirements?: string[] | null
