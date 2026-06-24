@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dreamporttravels",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-06-24",
+  "compatibility_flags": ["nodejs_compat"]
+}
