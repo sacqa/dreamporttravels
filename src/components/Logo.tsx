@@ -1,4 +1,4 @@
-import logo from "@/assets/dreamport-logo.png.asset.json";
+import logo from "@/assets/dreamport-logo.png";
 import { Link } from "@tanstack/react-router";
 
 export function Logo({ className = "h-9" }: { className?: string }) {
